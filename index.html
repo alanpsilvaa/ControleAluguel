@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Aluguéis</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontInter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-slate-50 text-slate-800 h-full flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-indigo-600 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/10 p-2.5 rounded-xl backdrop-blur-sm">
+                    <i class="fa-solid fa-house-chimney text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">Controle de Aluguéis</h1>
+                    <p class="text-xs text-indigo-200">Gerenciamento de 8 Casas & Extratos</p>
+                </div>
+            </div>
+            
+            <!-- Navigation Tabs -->
+            <div class="flex bg-indigo-700/60 p-1.5 rounded-xl border border-indigo-500/30">
+                <button onclick="switchTab('properties')" id="btn-tab-properties" class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2 bg-white text-indigo-700 shadow-sm">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Casas</span>
+                </button>
+                <button onclick="switchTab('statement')" id="btn-tab-statement" class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2 text-indigo-100 hover:text-white">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <span>Extrato Mensal</span>
+                </button>
+                <button onclick="switchTab('settings')" id="btn-tab-settings" class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2 text-indigo-100 hover:text-white">
+                    <i class="fa-solid fa-database"></i>
+                    <span>Supabase</span>
+                </button>
+            </div>
+            <button id="signout-button" onclick="signOutFromSupabase()" class="hidden px-3 py-2 rounded-lg text-sm font-medium text-indigo-100 hover:bg-indigo-700 transition" title="Sair">
+                <i class="fa-solid fa-right-from-bracket mr-1"></i>
+                Sair
+            </button>
+        </div>
+    </header>
+
+    <div id="supabase-auth-screen" class="fixed inset-0 z-[100] hidden bg-slate-900/60 backdrop-blur-sm p-4 flex items-center justify-center">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 sm:p-8">
+            <div class="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center mb-5">
+                <i class="fa-solid fa-lock text-xl"></i>
+            </div>
+            <h2 class="text-xl font-bold text-slate-900">Acesso privado</h2>
+            <p class="text-sm text-slate-500 mt-2 mb-6">Entre com a conta autorizada do Supabase para acessar os dados das casas.</p>
+            <form onsubmit="signInToSupabase(event)" class="space-y-4">
+                <div>
+                    <label for="auth-email" class="block text-sm font-medium text-slate-700 mb-1">E-mail</label>
+                    <input type="email" id="auth-email" autocomplete="username" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label for="auth-password" class="block text-sm font-medium text-slate-700 mb-1">Senha</label>
+                    <input type="password" id="auth-password" autocomplete="current-password" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <p id="supabase-auth-error" class="hidden text-sm text-rose-600" role="alert"></p>
+                <button id="auth-submit" type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition shadow-sm">
+                    Entrar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 overflow-y-auto">
+        
+        <!-- Toast Notification Box -->
+        <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 max-w-md bg-slate-900 text-white px-5 py-3 rounded-xl shadow-xl flex items-center space-x-3">
+            <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+            <span id="toast-message" class="text-sm font-medium">Operação realizada com sucesso!</span>
+        </div>
+
+        <!-- TAB 1: PROPERTIES (CASAS) -->
+        <section id="tab-properties" class="space-y-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Cadastro das 8 Casas</h2>
+                    <p class="text-sm text-slate-500">Gerencie os endereços e os valores base de aluguel de cada imóvel.</p>
+                </div>
+                <button onclick="openAddPropertyModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition shadow-sm flex items-center space-x-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Nova Casa</span>
+                </button>
+            </div>
+
+            <!-- Properties Grid -->
+            <div id="properties-grid" class="flex flex-col gap-3">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- TAB 2: STATEMENT (EXTRATO MENSAL) -->
+        <section id="tab-statement" class="space-y-6 hidden">
+            <!-- Month Selector & Summary Bar -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div class="flex items-center space-x-3 w-full sm:w-auto">
+                        <label for="select-month" class="text-sm font-semibold text-slate-700 whitespace-nowrap">Mês de Referência:</label>
+                        <input type="month" id="select-month" onchange="changeMonth()" class="bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-auto">
+                    </div>
+                    <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                        <button onclick="navigateMonth(-1)" class="p-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-600 transition" title="Mês Anterior">
+                            <i class="fa-solid fa-chevron-left text-sm"></i>
+                        </button>
+                        <button onclick="navigateMonth(1)" class="p-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-600 transition" title="Próximo Mês">
+                            <i class="fa-solid fa-chevron-right text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Financial Summary Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                    <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-4 flex items-center space-x-4">
+                        <div class="bg-blue-100 text-blue-600 p-3 rounded-xl">
+                            <i class="fa-solid fa-wallet text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total a Receber</p>
+                            <h3 id="summary-total" class="text-xl font-bold text-slate-900 mt-0.5">R$ 0,00</h3>
+                        </div>
+                    </div>
+                    <div class="bg-emerald-50/70 border border-emerald-200/60 rounded-xl p-4 flex items-center space-x-4">
+                        <div class="bg-emerald-100 text-emerald-600 p-3 rounded-xl">
+                            <i class="fa-solid fa-circle-check text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-emerald-600 uppercase tracking-wider">Total Recebido</p>
+                            <h3 id="summary-received" class="text-xl font-bold text-emerald-700 mt-0.5">R$ 0,00</h3>
+                        </div>
+                    </div>
+                    <div class="bg-amber-50/70 border border-amber-200/60 rounded-xl p-4 flex items-center space-x-4">
+                        <div class="bg-amber-100 text-amber-600 p-3 rounded-xl">
+                            <i class="fa-solid fa-clock-rotate-left text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Total Pendente</p>
+                            <h3 id="summary-pending" class="text-xl font-bold text-amber-700 mt-0.5">R$ 0,00</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statement List by Property -->
+            <div id="statement-list" class="space-y-4">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- TAB 3: SETTINGS / SUPABASE CONFIG -->
+        <section id="tab-settings" class="space-y-6 hidden">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 max-w-2xl mx-auto space-y-6">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Configuração do Supabase (Nuvem)</h2>
+                    <p class="text-sm text-slate-500 mt-1">Insira suas credenciais do Supabase para salvar os dados na nuvem e acessá-los de qualquer dispositivo (celular ou computador). Se deixar em branco, os dados serão salvos apenas no navegador local (LocalStorage).</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Supabase URL</label>
+                        <input type="text" id="supabase-url" placeholder="https://xyzcompany.supabase.co" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Supabase Publishable Key</label>
+                        <input type="password" id="supabase-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="pt-2 flex items-center justify-between">
+                        <button onclick="saveSupabaseConfig()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium text-sm transition shadow-sm">
+                            Salvar Configuração
+                        </button>
+                        <span id="supabase-status" class="text-xs font-medium text-slate-500">Status: LocalStorage Ativo</span>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-100 pt-4 text-xs text-slate-400 space-y-1">
+                    <p>O acesso aos dados exige uma conta autorizada do Supabase. Nunca use uma chave Secret ou service_role neste navegador.</p>
+                    <p>💡 Dica: Se quiser subir no GitHub Pages, basta subir este mesmo arquivo <code class="bg-slate-100 px-1 py-0.5 rounded text-slate-600">index.html</code> no repositório.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal: Add / Edit Property -->
+    <div id="property-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6 space-y-5">
+            <div class="flex justify-between items-center">
+                <h3 id="property-modal-title" class="text-lg font-bold text-slate-900">Cadastrar Nova Casa</h3>
+                <button onclick="closePropertyModal()" class="text-slate-400 hover:text-slate-600 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="property-form" onsubmit="saveProperty(event)" class="space-y-4">
+                <input type="hidden" id="prop-id">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Identificação / Nome</label>
+                    <input type="text" id="prop-name" required placeholder="Ex: Casa 01" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Endereço Completo</label>
+                    <input type="text" id="prop-address" required placeholder="Ex: Rua das Flores, 123" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Aluguel (R$)</label>
+                        <input type="number" step="0.01" id="prop-rent" required placeholder="0.00" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Água (R$)</label>
+                        <input type="number" step="0.01" min="0" id="prop-water" placeholder="0.00" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Luz (R$)</label>
+                        <input type="number" step="0.01" min="0" id="prop-electricity" placeholder="0.00" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 pt-3">
+                    <button type="button" onclick="closePropertyModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-medium text-sm transition">Cancelar</button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium text-sm transition shadow-sm">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
