@@ -104,6 +104,11 @@
             errorMessage.classList.toggle('hidden', !message);
         }
 
+        function backToSupabaseSettings() {
+            document.getElementById('supabase-auth-screen').classList.add('hidden');
+            switchTab('settings');
+        }
+
         async function signInToSupabase(event) {
             event.preventDefault();
             const errorMessage = document.getElementById('supabase-auth-error');
