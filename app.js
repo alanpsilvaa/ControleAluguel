@@ -19,13 +19,30 @@
         // Supabase client instance (if configured)
         let supabaseClient = null;
         let cloudReady = false;
+        let supabaseSession = null;
 
         window.onload = async function() {
             document.getElementById('select-month').value = currentMonth;
             initSupabase();
             if (supabaseClient) {
-                await loadFromSupabase();
+                try {
+                    const { data, error } = await supabaseClient.auth.getSession();
+                    if (error) throw error;
+                    supabaseSession = data.session;
+                    if (!supabaseSession) {
+                        showAuthScreen();
+                        return;
+                    }
+                    if (!await loadFromSupabase()) {
+                        showAuthScreen('Não foi possível carregar os dados privados. Verifique o acesso da conta.');
+                        return;
+                    }
+                } catch (error) {
+                    showAuthScreen(`Não foi possível verificar o login: ${error.message}`);
+                    return;
+                }
             }
+            showApplication();
             renderProperties();
             renderStatement();
         };
@@ -72,6 +89,68 @@
             setTimeout(() => {
                 toast.classList.add('translate-y-20', 'opacity-0');
             }, 3500);
+        }
+
+        function showApplication() {
+            document.getElementById('supabase-auth-screen').classList.add('hidden');
+            document.getElementById('signout-button').classList.toggle('hidden', !supabaseSession);
+        }
+
+        function showAuthScreen(message = '') {
+            document.getElementById('supabase-auth-screen').classList.remove('hidden');
+            document.getElementById('signout-button').classList.add('hidden');
+            const errorMessage = document.getElementById('supabase-auth-error');
+            errorMessage.textContent = message;
+            errorMessage.classList.toggle('hidden', !message);
+        }
+
+        async function signInToSupabase(event) {
+            event.preventDefault();
+            const errorMessage = document.getElementById('supabase-auth-error');
+            const submitButton = document.getElementById('auth-submit');
+            errorMessage.textContent = '';
+            errorMessage.classList.add('hidden');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Entrando...';
+
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: document.getElementById('auth-email').value.trim(),
+                    password: document.getElementById('auth-password').value
+                });
+                if (error) throw error;
+
+                supabaseSession = data.session;
+                if (!await loadFromSupabase()) {
+                    await supabaseClient.auth.signOut();
+                    supabaseSession = null;
+                    errorMessage.textContent = 'A conta não tem permissão para acessar os dados.';
+                    errorMessage.classList.remove('hidden');
+                    return;
+                }
+
+                showApplication();
+                renderProperties();
+                renderStatement();
+            } catch (error) {
+                errorMessage.textContent = `Não foi possível entrar: ${error.message}`;
+                errorMessage.classList.remove('hidden');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Entrar';
+            }
+        }
+
+        async function signOutFromSupabase() {
+            const { error } = await supabaseClient.auth.signOut();
+            if (error) {
+                showToast(`Não foi possível sair: ${error.message}`, 'error');
+                return;
+            }
+
+            supabaseSession = null;
+            cloudReady = false;
+            showAuthScreen();
         }
 
         // --- PROPERTIES MANAGEMENT ---
@@ -393,9 +472,21 @@
             localStorage.setItem('supabase_key', key);
             initSupabase();
             if (supabaseClient) {
-                if (await loadFromSupabase()) {
-                    renderProperties();
-                    renderStatement();
+                try {
+                    const { data, error } = await supabaseClient.auth.getSession();
+                    if (error) throw error;
+                    supabaseSession = data.session;
+                    if (!supabaseSession) {
+                        showAuthScreen();
+                        return;
+                    }
+                    if (await loadFromSupabase()) {
+                        showApplication();
+                        renderProperties();
+                        renderStatement();
+                    }
+                } catch (error) {
+                    showAuthScreen(`Não foi possível verificar o login: ${error.message}`);
                 }
             }
         }
@@ -421,6 +512,7 @@
         }
 
         async function loadFromSupabase() {
+            if (!supabaseSession) return false;
             const status = document.getElementById('supabase-status');
             status.textContent = "Status: Carregando dados da nuvem...";
             status.className = "text-xs font-medium text-indigo-600";
@@ -465,7 +557,7 @@
         }
 
         async function syncToSupabase(force = false) {
-            if (!supabaseClient || (!cloudReady && !force)) return false;
+            if (!supabaseClient || !supabaseSession || (!cloudReady && !force)) return false;
 
             const status = document.getElementById('supabase-status');
             let error;
