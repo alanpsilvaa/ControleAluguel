@@ -1,6 +1,7 @@
         // --- PROPERTIES MANAGEMENT ---
         function renderProperties() {
             const grid = document.getElementById('properties-grid');
+            if (!grid) return;
             grid.innerHTML = '';
 
             properties.forEach(prop => {
@@ -9,36 +10,54 @@
                 const water = Number(prop.defaultWater) || 0;
                 const electricity = Number(prop.defaultElectricity) || 0;
                 const total = rent + water + electricity;
-                card.className = "bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:shadow-md transition";
+                const monthRecord = getMonthRecord(prop.id);
+                const allChargesPaid = ['rent', 'water', 'electricity']
+                    .every(type => monthRecord[`${type}Status`] === 'paid');
+                const monthLabel = new Date(`${currentMonth}-01T12:00:00`)
+                    .toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                card.className = "bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-3 hover:shadow-md transition";
                 card.innerHTML = `
-                    <div class="flex-1 min-w-0 space-y-2">
-                        <div class="flex justify-between items-start">
-                            <span class="bg-indigo-50 text-indigo-700 text-xs font-semibold px-2.5 py-1 rounded-lg">${prop.name}</span>
-                            <div class="flex space-x-1">
-                                <button onclick="openEditPropertyModal(${prop.id})" class="p-1.5 text-slate-400 hover:text-indigo-600 transition"><i class="fa-solid fa-pen text-xs"></i></button>
-                                <button onclick="deleteProperty(${prop.id})" class="p-1.5 text-slate-400 hover:text-rose-600 transition"><i class="fa-solid fa-trash text-xs"></i></button>
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div class="flex-1 min-w-0 space-y-2">
+                            <div class="flex justify-between items-start">
+                                <span class="bg-indigo-50 text-indigo-700 text-xs font-semibold px-2.5 py-1 rounded-lg">${prop.name}</span>
+                                <div class="flex space-x-1">
+                                    <button onclick="openEditPropertyModal(${prop.id})" class="p-1.5 text-slate-400 hover:text-indigo-600 transition"><i class="fa-solid fa-pen text-xs"></i></button>
+                                    <button onclick="deleteProperty(${prop.id})" class="p-1.5 text-slate-400 hover:text-rose-600 transition"><i class="fa-solid fa-trash text-xs"></i></button>
+                                </div>
+                            </div>
+                            <h3 class="font-bold text-slate-800 text-base">${prop.address}</h3>
+                        </div>
+                        <div class="border-t border-slate-100 pt-3 flex justify-between items-center sm:border-t-0 sm:border-l sm:pt-0 sm:pl-5 sm:gap-6">
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-5 text-right">
+                                <div>
+                                    <span class="block text-xs text-slate-400 font-medium">Aluguel</span>
+                                    <span class="font-bold text-indigo-600 text-sm">R$ ${rent.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                                </div>
+                                <div>
+                                    <span class="block text-xs text-slate-400 font-medium">Água</span>
+                                    <span class="font-bold text-sky-600 text-sm">R$ ${water.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                                </div>
+                                <div>
+                                    <span class="block text-xs text-slate-400 font-medium">Luz</span>
+                                    <span class="font-bold text-amber-600 text-sm">R$ ${electricity.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                                </div>
+                                <div>
+                                    <span class="block text-xs text-slate-500 font-semibold">Total</span>
+                                    <span class="font-bold text-slate-900 text-sm">R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                                </div>
                             </div>
                         </div>
-                        <h3 class="font-bold text-slate-800 text-base">${prop.address}</h3>
                     </div>
-                    <div class="border-t border-slate-100 pt-3 flex justify-between items-center sm:border-t-0 sm:border-l sm:pt-0 sm:pl-5 sm:gap-6">
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-5 text-right">
-                            <div>
-                                <span class="block text-xs text-slate-400 font-medium">Aluguel</span>
-                                <span class="font-bold text-indigo-600 text-sm">R$ ${rent.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
-                            </div>
-                            <div>
-                                <span class="block text-xs text-slate-400 font-medium">Água</span>
-                                <span class="font-bold text-sky-600 text-sm">R$ ${water.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
-                            </div>
-                            <div>
-                                <span class="block text-xs text-slate-400 font-medium">Luz</span>
-                                <span class="font-bold text-amber-600 text-sm">R$ ${electricity.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
-                            </div>
-                            <div>
-                                <span class="block text-xs text-slate-500 font-semibold">Total</span>
-                                <span class="font-bold text-slate-900 text-sm">R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
-                            </div>
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-t border-slate-100 pt-3">
+                        <span class="text-xs text-slate-500">Pagamentos de <span class="font-semibold capitalize text-slate-700">${monthLabel}</span></span>
+                        <div class="flex items-center gap-2">
+                            <span class="rounded-full px-2.5 py-1 text-xs font-semibold ${allChargesPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
+                                ${allChargesPaid ? 'Tudo pago' : 'Pendente'}
+                            </span>
+                            <button type="button" onclick="togglePropertyMonthlyStatus(${prop.id})" aria-label="${allChargesPaid ? 'Marcar todos os pagamentos como pendentes' : 'Marcar todos os pagamentos como pagos'}: ${prop.name}" class="rounded-lg px-3 py-1.5 text-xs font-semibold transition ${allChargesPaid ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-indigo-600 text-white hover:bg-indigo-700'}">
+                                ${allChargesPaid ? 'Marcar tudo pendente' : 'Marcar tudo pago'}
+                            </button>
                         </div>
                     </div>
                 `;

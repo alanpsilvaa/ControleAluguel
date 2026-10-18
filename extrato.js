@@ -1,6 +1,7 @@
         // --- STATEMENT & MONTHLY MANAGEMENT ---
         function changeMonth() {
             currentMonth = document.getElementById('select-month').value;
+            localStorage.setItem('rental_current_month', currentMonth);
             renderStatement();
         }
 
@@ -10,6 +11,7 @@
             if (month > 12) { month = 1; year++; }
             if (month < 1) { month = 12; year--; }
             currentMonth = `${year}-${String(month).padStart(2, '0')}`;
+            localStorage.setItem('rental_current_month', currentMonth);
             document.getElementById('select-month').value = currentMonth;
             renderStatement();
         }
@@ -62,8 +64,54 @@
             renderStatement();
         }
 
+        function togglePropertyMonthlyStatus(propId) {
+            const rec = getMonthRecord(propId);
+            const chargeTypes = ['rent', 'water', 'electricity'];
+            const allChargesPaid = chargeTypes.every(type => rec[`${type}Status`] === 'paid');
+            const nextStatus = allChargesPaid ? 'pending' : 'paid';
+            const paymentDate = nextStatus === 'paid' ? new Date().toISOString().slice(0, 10) : '';
+
+            chargeTypes.forEach(type => {
+                rec[`${type}Status`] = nextStatus;
+                rec[`${type}Date`] = paymentDate;
+            });
+
+            saveData();
+            renderProperties();
+            renderStatement();
+        }
+
+        function renderStatementCharge(prop, rec, type, label, icon, valueField, color) {
+            const isPaid = rec[`${type}Status`] === 'paid';
+            const value = type === 'rent' ? rec[valueField] : (rec[valueField] || '');
+            const valueHandler = type === 'rent'
+                ? `parseFloat(this.value)`
+                : `parseFloat(this.value) || 0`;
+            const date = rec[`${type}Date`];
+
+            return `
+                <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-${color}-700">
+                            <i class="fa-solid ${icon}"></i>${label}
+                        </span>
+                        <button type="button" onclick="toggleStatus(${prop.id}, '${type}')" aria-label="${isPaid ? 'Marcar como pendente' : 'Marcar como pago'}: ${label} - ${prop.name}" class="shrink-0 rounded-lg px-2 py-1 text-xs font-bold transition ${isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
+                            ${isPaid ? '<i class="fa-solid fa-check mr-1"></i>Pago' : '<i class="fa-solid fa-clock mr-1"></i>Pendente'}
+                        </button>
+                    </div>
+                    <label class="sr-only" for="charge-${type}-${prop.id}">Valor de ${label} para ${prop.name}</label>
+                    <div class="relative mt-2">
+                        <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-xs font-medium text-slate-400">R$</span>
+                        <input id="charge-${type}-${prop.id}" type="number" step="0.01" value="${value}" placeholder="0,00" onchange="updateRecordField(${prop.id}, '${valueField}', ${valueHandler})" class="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    ${date ? `<span class="mt-1.5 block text-[11px] text-slate-400">Pago em: ${date}</span>` : ''}
+                </div>
+            `;
+        }
+
         function renderStatement() {
             const listContainer = document.getElementById('statement-list');
+            if (!listContainer) return;
             listContainer.innerHTML = '';
 
             if (properties.length === 0) {
@@ -90,70 +138,28 @@
                     + (Number(rec.electricityValue) || 0);
 
                 const card = document.createElement('div');
-                card.className = "bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 space-y-5 hover:shadow-md transition";
+                card.className = "bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-100 space-y-3";
                 
                 card.innerHTML = `
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-100">
-                        <div class="flex items-start gap-3">
-                            <div class="w-10 h-10 shrink-0 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                                <i class="fa-solid fa-house"></i>
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="flex min-w-0 items-center gap-2.5">
+                            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                                <i class="fa-solid fa-house text-sm"></i>
                             </div>
-                            <div>
-                                <span class="text-xs font-bold text-indigo-600 uppercase tracking-wide">${prop.name}</span>
-                                <h3 class="font-semibold text-slate-700 text-sm mt-0.5">${prop.address}</h3>
+                            <div class="min-w-0">
+                                <h3 class="truncate text-sm font-bold text-slate-800">${prop.name}</h3>
                             </div>
                         </div>
-                        <div class="sm:text-right rounded-xl bg-indigo-50/70 px-4 py-2">
-                            <span class="block text-[11px] font-semibold text-indigo-500 uppercase tracking-wider">Total da casa</span>
-                            <span id="property-total-${prop.id}" class="font-bold text-indigo-700 text-base">R$ ${propertyTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                        <div class="shrink-0 rounded-lg bg-indigo-50 px-3 py-1.5 text-right">
+                            <span class="block text-[10px] font-semibold uppercase tracking-wide text-indigo-500">Total</span>
+                            <span id="property-total-${prop.id}" class="text-sm font-bold text-indigo-700">R$ ${propertyTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <!-- Aluguel -->
-                        <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 space-y-3">
-                            <div class="flex justify-between items-center">
-                                <span class="flex items-center gap-2 text-xs font-bold text-indigo-700 uppercase tracking-wide"><i class="fa-solid fa-key"></i> Aluguel</span>
-                                <button onclick="toggleStatus(${prop.id}, 'rent')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition ${rec.rentStatus === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
-                                    ${rec.rentStatus === 'paid' ? '<i class="fa-solid fa-check mr-1"></i> Pago' : '<i class="fa-solid fa-clock mr-1"></i> Pendente'}
-                                </button>
-                            </div>
-                            <div>
-                                <label class="text-xs text-slate-400 block mb-1">Valor (R$)</label>
-                                <input type="number" step="0.01" value="${rec.rentValue}" onchange="updateRecordField(${prop.id}, 'rentValue', parseFloat(this.value))" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            ${rec.rentDate ? `<span class="text-xs text-slate-400 block">Pago em: ${rec.rentDate}</span>` : ''}
-                        </div>
-
-                        <!-- Água -->
-                        <div class="bg-sky-50/50 p-4 rounded-xl border border-sky-100 space-y-3">
-                            <div class="flex justify-between items-center">
-                                <span class="flex items-center gap-2 text-xs font-bold text-sky-700 uppercase tracking-wide"><i class="fa-solid fa-droplet"></i> Água</span>
-                                <button onclick="toggleStatus(${prop.id}, 'water')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition ${rec.waterStatus === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
-                                    ${rec.waterStatus === 'paid' ? '<i class="fa-solid fa-check mr-1"></i> Pago' : '<i class="fa-solid fa-clock mr-1"></i> Pendente'}
-                                </button>
-                            </div>
-                            <div>
-                                <label class="text-xs text-slate-400 block mb-1">Valor Informado (R$)</label>
-                                <input type="number" step="0.01" value="${rec.waterValue || ''}" placeholder="0.00" onchange="updateRecordField(${prop.id}, 'waterValue', parseFloat(this.value) || 0)" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            ${rec.waterDate ? `<span class="text-xs text-slate-400 block">Pago em: ${rec.waterDate}</span>` : ''}
-                        </div>
-
-                        <!-- Luz -->
-                        <div class="bg-amber-50/50 p-4 rounded-xl border border-amber-100 space-y-3">
-                            <div class="flex justify-between items-center">
-                                <span class="flex items-center gap-2 text-xs font-bold text-amber-700 uppercase tracking-wide"><i class="fa-solid fa-bolt"></i> Luz</span>
-                                <button onclick="toggleStatus(${prop.id}, 'electricity')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition ${rec.electricityStatus === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
-                                    ${rec.electricityStatus === 'paid' ? '<i class="fa-solid fa-check mr-1"></i> Pago' : '<i class="fa-solid fa-clock mr-1"></i> Pendente'}
-                                </button>
-                            </div>
-                            <div>
-                                <label class="text-xs text-slate-400 block mb-1">Valor Informado (R$)</label>
-                                <input type="number" step="0.01" value="${rec.electricityValue || ''}" placeholder="0.00" onchange="updateRecordField(${prop.id}, 'electricityValue', parseFloat(this.value) || 0)" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            ${rec.electricityDate ? `<span class="text-xs text-slate-400 block">Pago em: ${rec.electricityDate}</span>` : ''}
-                        </div>
+                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                        ${renderStatementCharge(prop, rec, 'rent', 'Aluguel', 'fa-key', 'rentValue', 'indigo')}
+                        ${renderStatementCharge(prop, rec, 'water', 'Água', 'fa-droplet', 'waterValue', 'sky')}
+                        ${renderStatementCharge(prop, rec, 'electricity', 'Luz', 'fa-bolt', 'electricityValue', 'amber')}
                     </div>
                 `;
                 listContainer.appendChild(card);

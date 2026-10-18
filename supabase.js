@@ -42,8 +42,7 @@
                 }
 
                 showApplication();
-                renderProperties();
-                renderStatement();
+                renderCurrentPage();
             } catch (error) {
                 errorMessage.textContent = `Não foi possível entrar: ${error.message}`;
                 errorMessage.classList.remove('hidden');
@@ -96,8 +95,7 @@
                     }
                     if (await loadFromSupabase()) {
                         showApplication();
-                        renderProperties();
-                        renderStatement();
+                        renderCurrentPage();
                     }
                 } catch (error) {
                     showAuthScreen(`Não foi possível verificar o login: ${error.message}`);

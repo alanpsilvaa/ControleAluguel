@@ -14,7 +14,10 @@
         let records = JSON.parse(localStorage.getItem('rental_records')) || {}; 
 
         // Current selected month in YYYY-MM
-        let currentMonth = new Date().toISOString().slice(0, 7);
+        const savedMonth = localStorage.getItem('rental_current_month');
+        let currentMonth = /^\d{4}-(0[1-9]|1[0-2])$/.test(savedMonth || '')
+            ? savedMonth
+            : new Date().toISOString().slice(0, 7);
 
         // Supabase client instance (if configured)
         let supabaseClient = null;
@@ -22,7 +25,8 @@
         let supabaseSession = null;
 
         window.onload = async function() {
-            document.getElementById('select-month').value = currentMonth;
+            const monthSelector = document.getElementById('select-month');
+            if (monthSelector) monthSelector.value = currentMonth;
             initSupabase();
             if (supabaseClient) {
                 try {
@@ -43,31 +47,38 @@
                 }
             }
             showApplication();
-            renderProperties();
-            renderStatement();
+            renderCurrentPage();
         };
+
+        function renderCurrentPage() {
+            if (document.getElementById('properties-grid')) renderProperties();
+            if (document.getElementById('statement-list')) renderStatement();
+        }
 
         // Tab Switching
         function switchTab(tabName) {
-            document.getElementById('tab-properties').classList.add('hidden');
-            document.getElementById('tab-statement').classList.add('hidden');
-            document.getElementById('tab-settings').classList.add('hidden');
+            const targetSection = document.getElementById(`tab-${tabName}`);
+            if (!targetSection && tabName !== 'settings') {
+                window.location.href = tabName === 'statement' ? 'extrato.html' : 'casas.html';
+                return;
+            }
 
-            document.getElementById('btn-tab-properties').className = "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2 text-indigo-100 hover:text-white";
-            document.getElementById('btn-tab-statement').className = "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2 text-indigo-100 hover:text-white";
-            document.getElementById('btn-tab-settings').className = "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2 text-indigo-100 hover:text-white";
+            ['properties', 'statement', 'settings'].forEach(name => {
+                const section = document.getElementById(`tab-${name}`);
+                const button = document.getElementById(`btn-tab-${name}`);
+                if (section) section.classList.toggle('hidden', name !== tabName);
+                if (button) {
+                    button.className = name === tabName
+                        ? "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2 bg-white text-indigo-700 shadow-sm"
+                        : "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2 text-indigo-100 hover:text-white";
+                }
+            });
 
             if (tabName === 'properties') {
-                document.getElementById('tab-properties').classList.remove('hidden');
-                document.getElementById('btn-tab-properties').className = "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2 bg-white text-indigo-700 shadow-sm";
                 renderProperties();
             } else if (tabName === 'statement') {
-                document.getElementById('tab-statement').classList.remove('hidden');
-                document.getElementById('btn-tab-statement').className = "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2 bg-white text-indigo-700 shadow-sm";
                 renderStatement();
             } else if (tabName === 'settings') {
-                document.getElementById('tab-settings').classList.remove('hidden');
-                document.getElementById('btn-tab-settings').className = "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2 bg-white text-indigo-700 shadow-sm";
                 loadSupabaseConfigUI();
             }
         }
