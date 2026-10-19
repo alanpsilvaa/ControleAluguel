@@ -12,9 +12,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=20261018-6">
+    <link rel="icon" type="image/jpeg" href="casa1.jpg">
 </head>
-<body class="bg-slate-50 text-slate-800 h-full flex flex-col">
+<body class="page-casas bg-slate-50 text-slate-800 h-full flex flex-col">
 
     <!-- Header -->
     <header class="bg-indigo-600 text-white shadow-md">
@@ -25,7 +26,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-bold tracking-tight">Controle de Aluguéis</h1>
-                    <p class="text-xs text-indigo-200">Gerenciamento de 8 Casas & Extratos</p>
+                    <p class="text-xs text-indigo-200">Gerenciamento de Casas & Extratos</p>
                 </div>
             </div>
             
@@ -92,8 +93,8 @@
         <section id="tab-properties" class="space-y-6">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <div>
-                    <h2 class="text-lg font-bold text-slate-900">Cadastro das 8 Casas</h2>
-                    <p class="text-sm text-slate-500">Gerencie os endereços e os valores base de aluguel de cada imóvel.</p>
+                    <h2 class="text-lg font-bold text-slate-900">Imóveis Cadastrados</h2>
+                    <p class="text-sm text-slate-500">Gerencie inquilinos, endereços, aluguéis e contas de cada imóvel.</p>
                 </div>
                 <button onclick="openAddPropertyModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition shadow-sm flex items-center space-x-2">
                     <i class="fa-solid fa-plus"></i>
@@ -135,7 +136,6 @@
                 <div class="border-t border-slate-100 pt-4 text-xs text-slate-400 space-y-1">
                     <p>Para acessar a nuvem, entre com a conta autorizada. O acesso aos dados é privado.</p>
                     <p>Use somente a Publishable Key. Nunca coloque uma chave Secret ou service_role neste navegador.</p>
-                    <p>💡 Dica: No GitHub Pages, publique também os arquivos casas.html e extrato.html junto com o index.html.</p>
                 </div>
             </div>
         </section>
@@ -144,7 +144,7 @@
 
     <!-- Modal: Add / Edit Property -->
     <div id="property-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6 space-y-5">
+        <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 space-y-5">
             <div class="flex justify-between items-center">
                 <h3 id="property-modal-title" class="text-lg font-bold text-slate-900">Cadastrar Nova Casa</h3>
                 <button onclick="closePropertyModal()" class="text-slate-400 hover:text-slate-600 transition">
@@ -161,19 +161,23 @@
                     <label class="block text-sm font-medium text-slate-700 mb-1">Endereço Completo</label>
                     <input type="text" id="prop-address" required placeholder="Ex: Rua das Flores, 123" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Aluguel (R$)</label>
-                        <input type="number" step="0.01" id="prop-rent" required placeholder="0.00" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <div class="border-t border-slate-100 pt-4">
+                    <h4 class="text-sm font-semibold text-slate-800">Identificação das contas</h4>
+                    <p class="mt-1 text-xs text-slate-500">Informe os identificadores das faturas para associá-las automaticamente a esta casa.</p>
+                    <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label for="prop-sabesp-code" class="block text-sm font-medium text-slate-700 mb-1">Número de fornecimento Sabesp</label>
+                            <input type="text" inputmode="numeric" autocomplete="off" id="prop-sabesp-code" placeholder="Número de fornecimento na fatura" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label for="prop-enel-code" class="block text-sm font-medium text-slate-700 mb-1">UC / instalação Enel</label>
+                            <input type="text" inputmode="numeric" autocomplete="off" id="prop-enel-code" placeholder="UC / instalação na fatura" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Água (R$)</label>
-                        <input type="number" step="0.01" min="0" id="prop-water" placeholder="0.00" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Luz (R$)</label>
-                        <input type="number" step="0.01" min="0" id="prop-electricity" placeholder="0.00" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Aluguel base (R$)</label>
+                    <input type="number" step="0.01" id="prop-rent" required placeholder="0.00" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
                 <div class="flex justify-end space-x-3 pt-3">
                     <button type="button" onclick="closePropertyModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-medium text-sm transition">Cancelar</button>
@@ -183,9 +187,16 @@
         </div>
     </div>
 
-    <script src="app.js?v=20261018-6"></script>
-    <script src="casas.js?v=20261018-6"></script>
-    <script src="extrato.js?v=20261018-6"></script>
-    <script src="supabase.js?v=20261018-6"></script>
+    <footer class="w-full border-t border-slate-200 bg-white/70 px-4 py-4 text-center text-xs text-slate-500">
+        Desenvolvido por <span class="font-semibold text-slate-600">Alan Pereira Silva</span>
+        <span class="mx-1" aria-hidden="true">&middot;</span>
+        &copy; 2026 Todos os direitos reservados
+    </footer>
+
+    <script src="app.js?v=20261019-1"></script>
+    <script src="casas.js?v=20261019-1"></script>
+    <script src="extrato.js?v=20261019-1"></script>
+    <script src="importar-contas.js?v=20261018-8"></script>
+    <script src="supabase.js?v=20261018-8"></script>
 </body>
 </html>

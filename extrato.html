@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="h-full">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,9 +12,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=20261018-6">
+    <link rel="icon" type="image/jpeg" href="casa1.jpg">
 </head>
-<body class="bg-slate-50 text-slate-800 h-full flex flex-col">
+<body class="page-extrato bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
     <!-- Header -->
     <header class="bg-indigo-600 text-white shadow-md">
@@ -80,7 +81,7 @@
     </div>
 
     <!-- Main Container -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 overflow-y-auto">
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6">
         
         <!-- Toast Notification Box -->
         <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 max-w-md bg-slate-900 text-white px-5 py-3 rounded-xl shadow-xl flex items-center space-x-3">
@@ -140,6 +141,30 @@
                 </div>
             </div>
 
+            <section class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4" aria-labelledby="utility-import-heading">
+                <div>
+                    <h2 id="utility-import-heading" class="text-lg font-bold text-slate-900">Importar contas de água e luz</h2>
+                    <p class="text-sm text-slate-500 mt-1">Selecione vários PDFs da Sabesp e da Enel. A leitura acontece neste navegador; os arquivos não são enviados. Confira e corrija os dados detectados antes de importar.</p>
+                </div>
+                <div class="flex flex-col sm:flex-row sm:items-end gap-3">
+                    <div class="flex-1">
+                        <label for="utility-pdf-files" class="block text-sm font-medium text-slate-700 mb-1">Faturas em PDF</label>
+                        <input id="utility-pdf-files" type="file" accept=".pdf,application/pdf" multiple class="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-4 file:py-2 file:font-semibold file:text-indigo-700 hover:file:bg-indigo-100">
+                    </div>
+                    <button type="button" id="utility-analyze-button" onclick="analyzeUtilityPdfs()" class="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-60">
+                        Analisar PDFs
+                    </button>
+                </div>
+                <p id="utility-import-message" class="hidden text-sm" role="status" aria-live="polite"></p>
+                <div id="utility-import-review" class="hidden space-y-3"></div>
+                <div id="utility-import-actions" class="hidden border-t border-slate-100 pt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <p id="utility-import-count" class="text-sm text-slate-500"></p>
+                    <button type="button" id="utility-import-button" onclick="importReviewedUtilityBills()" class="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50">
+                        Importar selecionadas
+                    </button>
+                </div>
+            </section>
+
             <div>
                 <div class="mb-3">
                     <h2 class="text-lg font-bold text-slate-900">Lançamentos do mês</h2>
@@ -180,17 +205,22 @@
                 <div class="border-t border-slate-100 pt-4 text-xs text-slate-400 space-y-1">
                     <p>Para acessar a nuvem, entre com a conta autorizada. O acesso aos dados é privado.</p>
                     <p>Use somente a Publishable Key. Nunca coloque uma chave Secret ou service_role neste navegador.</p>
-                    <p>💡 Dica: No GitHub Pages, publique também os arquivos casas.html e extrato.html junto com o index.html.</p>
                 </div>
             </div>
         </section>
 
     </main>
 
+    <footer class="w-full border-t border-slate-200 bg-white/70 px-4 py-4 text-center text-xs text-slate-500">
+        Desenvolvido por <span class="font-semibold text-slate-600">Alan Pereira Silva</span>
+        <span class="mx-1" aria-hidden="true">&middot;</span>
+        &copy; 2026 Todos os direitos reservados
+    </footer>
 
-    <script src="app.js?v=20261018-6"></script>
-    <script src="casas.js?v=20261018-6"></script>
-    <script src="extrato.js?v=20261018-6"></script>
-    <script src="supabase.js?v=20261018-6"></script>
+    <script src="app.js?v=20261019-1"></script>
+    <script src="casas.js?v=20261019-1"></script>
+    <script src="extrato.js?v=20261019-1"></script>
+    <script src="importar-contas.js?v=20261018-12"></script>
+    <script src="supabase.js?v=20261018-8"></script>
 </body>
 </html>
