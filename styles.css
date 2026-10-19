@@ -1,1 +1,396 @@
-body { font-family: 'Inter', sans-serif; }
+/* Theme palette: edit these values to change the app's shared colors. */
+:root {
+    --font-app: 'Inter', sans-serif;
+    --font-monospace: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    --color-page: #f5f7fc;
+    --color-surface: #ffffff;
+    --color-surface-soft: #f5f7fc;
+    --color-surface-soft-overlay: rgb(245 247 252 / 70%);
+    --color-surface-muted: #eef2f8;
+    /* Fundo claro e borda mais marcada para dar contraste aos cartões das casas. */
+    --color-surface-card: #f1f5ff;
+    --color-overlay: #0f172a;
+    --color-overlay-50: rgb(15 23 42 / 50%);
+    --color-overlay-60: rgb(15 23 42 / 60%);
+    --color-white-overlay: rgb(255 255 255 / 10%);
+    --color-border: #e8ebee;
+    --color-border-muted: #dfe3e7;
+    --color-border-muted-overlay: rgb(223 227 231 / 80%);
+    --color-border-strong: #cbd5e1;
+    --color-brand-border-overlay: rgb(99 102 241 / 30%);
+    --color-success-surface-overlay: rgb(236 253 245 / 70%);
+    --color-success-border-overlay: rgb(167 243 208 / 60%);
+    --color-warning-surface-overlay: rgb(255 251 235 / 70%);
+    --color-warning-border-overlay: rgb(253 230 138 / 60%);
+
+    --color-text: #1e293b;
+    --color-text-heading: #0f172a;
+    --color-text-secondary: #64748b;
+    --color-text-muted: #94a3b8;
+
+    --color-brand: #4f46e5;
+    --color-brand-hover: #4338ca;
+    --color-brand-dark: #3730a3;
+    --color-brand-soft: #eef2ff;
+    --color-brand-soft-strong: #e0e7ff;
+    --color-brand-text: #4338ca;
+    --color-brand-on-dark: #e0e7ff;
+    --color-brand-subtle: #c7d2fe;
+    --color-brand-border: #6366f1;
+    --color-focus: #6366f1;
+
+    --color-success-soft: #d1fae5;
+    --color-success-surface: #ecfdf5;
+    --color-success-border: #a7f3d0;
+    --color-success: #059669;
+    --color-success-dark: #047857;
+    --color-success-icon: #34d399;
+
+    --color-warning-soft: #fef3c7;
+    --color-warning-surface: #fffbeb;
+    --color-warning-border: #fde68a;
+    --color-warning: #d97706;
+    --color-warning-dark: #b45309;
+    --color-warning-icon: #fbbf24;
+
+    --color-danger-soft: #fff1f2;
+    --color-danger: #e11d48;
+    --color-danger-hover: #e11d48;
+    --color-error: #e11d48;
+
+    --color-water: #0369a1;
+    --color-info-soft: #dbeafe;
+    --color-info: #2563eb;
+}
+
+/* Global page background and typography. */
+body {
+    font-family: var(--font-app);
+    color: var(--color-text);
+}
+
+[class~="font-mono"] {
+    font-family: var(--font-monospace) !important;
+}
+
+[class~="font-medium"] {
+    font-weight: 500 !important;
+}
+
+[class~="font-semibold"] {
+    font-weight: 600 !important;
+}
+
+[class~="font-bold"] {
+    font-weight: 700 !important;
+}
+
+[class~="text-xs"] {
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+}
+
+[class~="text-sm"] {
+    font-size: 0.875rem !important;
+    line-height: 1.25rem !important;
+}
+
+[class~="text-base"] {
+    font-size: 1rem !important;
+    line-height: 1.5rem !important;
+}
+
+[class~="text-lg"] {
+    font-size: 1.125rem !important;
+    line-height: 1.75rem !important;
+}
+
+[class~="text-xl"] {
+    font-size: 1.25rem !important;
+    line-height: 1.75rem !important;
+}
+
+[class~="text-2xl"] {
+    font-size: 1.5rem !important;
+    line-height: 2rem !important;
+}
+
+[class~="text-[10px]"] {
+    font-size: 10px !important;
+}
+
+[class~="text-[11px]"] {
+    font-size: 11px !important;
+}
+
+/* Shared page surfaces: body, panels, house cards, and bill-review cards. */
+[class~="bg-slate-50"] {
+    background-color: var(--color-page) !important;
+}
+
+[class~="bg-slate-50/70"] {
+    background-color: var(--color-surface-soft-overlay) !important;
+}
+
+[class~="bg-slate-100"] {
+    background-color: var(--color-surface-muted) !important;
+}
+
+[class~="bg-slate-200"] {
+    background-color: var(--color-surface-card) !important;
+}
+
+[class~="bg-white"] {
+    background-color: var(--color-surface) !important;
+}
+
+[class~="bg-slate-900"] {
+    background-color: var(--color-overlay) !important;
+}
+
+[class~="bg-slate-900/50"] {
+    background-color: var(--color-overlay-50) !important;
+}
+
+[class~="bg-slate-900/60"] {
+    background-color: var(--color-overlay-60) !important;
+}
+
+[class~="border-slate-100"] {
+    border-color: var(--color-border) !important;
+}
+
+[class~="border-slate-200"],
+[class~="border-slate-200/80"] {
+    border-color: var(--color-border-muted) !important;
+}
+
+[class~="border-slate-300"] {
+    border-color: var(--color-border-strong) !important;
+}
+
+[class~="bg-slate-200"][class~="border-slate-300"] {
+    border-color: #9aaddb !important;
+    box-shadow: 0 3px 10px rgb(79 70 229 / 12%) !important;
+}
+
+.statement-property-card {
+    border-color: #cbd5e1 !important;
+}
+
+@media (hover: hover) {
+    [class~="bg-slate-200"][class~="border-slate-300"]:hover {
+        transform: translateY(-2px);
+        border-color: #7f96cb !important;
+        box-shadow: 0 8px 18px rgb(79 70 229 / 18%) !important;
+    }
+}
+
+/* Main navigation and primary actions: indigo brand colors. */
+[class~="bg-indigo-600"] {
+    background-color: var(--color-brand) !important;
+}
+
+[class~="bg-indigo-700/60"] {
+    background-color: rgb(67 56 202 / 60%) !important;
+}
+
+[class~="bg-indigo-50"] {
+    background-color: var(--color-brand-soft) !important;
+}
+
+[class~="bg-indigo-100"] {
+    background-color: var(--color-brand-soft-strong) !important;
+}
+
+[class~="bg-white/10"] {
+    background-color: var(--color-white-overlay) !important;
+}
+
+[class~="border-indigo-500/30"] {
+    border-color: var(--color-brand-border-overlay) !important;
+}
+
+[class~="text-indigo-100"] {
+    color: var(--color-brand-on-dark) !important;
+}
+
+[class~="text-indigo-200"] {
+    color: var(--color-brand-subtle) !important;
+}
+
+[class~="text-indigo-500"] {
+    color: #6366f1 !important;
+}
+
+[class~="text-indigo-600"] {
+    color: var(--color-brand) !important;
+}
+
+[class~="text-indigo-700"] {
+    color: var(--color-brand-text) !important;
+}
+
+[class~="text-white"] {
+    color: #ffffff !important;
+}
+
+[class~="hover:bg-indigo-50"]:hover {
+    background-color: var(--color-brand-soft) !important;
+}
+
+[class~="hover:bg-indigo-700"]:hover {
+    background-color: var(--color-brand-hover) !important;
+}
+
+[class~="hover:text-indigo-600"]:hover {
+    color: var(--color-brand) !important;
+}
+
+[class~="hover:text-indigo-800"]:hover {
+    color: var(--color-brand-dark) !important;
+}
+
+[class~="hover:text-white"]:hover {
+    color: #ffffff !important;
+}
+
+/* General copy, headings, and form labels. */
+[class~="text-slate-400"] {
+    color: var(--color-text-muted) !important;
+}
+
+[class~="text-slate-500"] {
+    color: var(--color-text-secondary) !important;
+}
+
+[class~="text-slate-600"] {
+    color: #475569 !important;
+}
+
+[class~="text-slate-700"] {
+    color: #334155 !important;
+}
+
+[class~="text-slate-800"] {
+    color: var(--color-text) !important;
+}
+
+[class~="text-slate-900"] {
+    color: var(--color-text-heading) !important;
+}
+
+[class~="hover:text-slate-600"]:hover {
+    color: #475569 !important;
+}
+
+/* Form fields and keyboard-focus treatment across both screens. */
+[class~="bg-slate-50"]:is(input, select, textarea) {
+    background-color: var(--color-page) !important;
+}
+
+[class~="focus:ring-indigo-500"]:focus {
+    --tw-ring-color: var(--color-focus) !important;
+}
+
+/* House utility identifiers and statement water amounts. */
+[class~="text-sky-700"] {
+    color: var(--color-water) !important;
+}
+
+/* Summary cards, paid/pending badges, and operation feedback. */
+[class~="bg-blue-100"] {
+    background-color: var(--color-info-soft) !important;
+}
+
+[class~="text-blue-600"] {
+    color: var(--color-info) !important;
+}
+
+[class~="bg-emerald-50/70"] {
+    background-color: var(--color-success-surface-overlay) !important;
+}
+
+[class~="bg-emerald-100"] {
+    background-color: var(--color-success-soft) !important;
+}
+
+[class~="border-emerald-200/60"] {
+    border-color: var(--color-success-border-overlay) !important;
+}
+
+[class~="text-emerald-400"] {
+    color: var(--color-success-icon) !important;
+}
+
+[class~="text-emerald-600"] {
+    color: var(--color-success) !important;
+}
+
+[class~="text-emerald-700"] {
+    color: var(--color-success-dark) !important;
+}
+
+[class~="bg-emerald-600"] {
+    background-color: var(--color-success) !important;
+}
+
+[class~="hover:bg-emerald-700"]:hover {
+    background-color: var(--color-success-dark) !important;
+}
+
+[class~="bg-amber-50/70"] {
+    background-color: var(--color-warning-surface-overlay) !important;
+}
+
+[class~="bg-amber-100"] {
+    background-color: var(--color-warning-soft) !important;
+}
+
+[class~="border-amber-200/60"] {
+    border-color: var(--color-warning-border-overlay) !important;
+}
+
+[class~="text-amber-400"] {
+    color: var(--color-warning-icon) !important;
+}
+
+[class~="text-amber-600"] {
+    color: var(--color-warning) !important;
+}
+
+[class~="text-amber-700"] {
+    color: var(--color-warning-dark) !important;
+}
+
+[class~="hover:bg-rose-50"]:hover {
+    background-color: var(--color-danger-soft) !important;
+}
+
+[class~="hover:text-rose-600"]:hover,
+[class~="text-rose-600"] {
+    color: var(--color-danger) !important;
+}
+
+/* Buttons and hover feedback. */
+[class~="hover:bg-slate-200"]:hover {
+    background-color: var(--color-surface-card) !important;
+}
+
+/* File-picker button: keep its appearance consistent with primary actions. */
+[class~="file:bg-indigo-50"]::file-selector-button {
+    background-color: var(--color-brand-soft) !important;
+}
+
+[class~="file:bg-indigo-100"]::file-selector-button {
+    background-color: var(--color-brand-soft-strong) !important;
+}
+
+[class~="file:text-indigo-700"]::file-selector-button {
+    color: var(--color-brand-text) !important;
+}
+
+[class~="hover:file:bg-indigo-100"]:hover::file-selector-button {
+    background-color: var(--color-brand-soft-strong) !important;
+}

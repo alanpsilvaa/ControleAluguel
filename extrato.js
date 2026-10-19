@@ -17,9 +17,13 @@
         }
 
         function getMonthRecord(propId) {
-            if (!records[currentMonth]) records[currentMonth] = {};
-            if (!records[currentMonth][propId]) {
-                records[currentMonth][propId] = {
+            return getMonthRecordForPeriod(currentMonth, propId);
+        }
+
+        function getMonthRecordForPeriod(month, propId) {
+            if (!records[month]) records[month] = {};
+            if (!records[month][propId]) {
+                records[month][propId] = {
                     rentValue: 0,
                     rentStatus: 'pending',
                     rentDate: '',
@@ -31,7 +35,7 @@
                     electricityDate: ''
                 };
             }
-            return records[currentMonth][propId];
+            return records[month][propId];
         }
 
         function updateRecordField(propId, field, value) {
@@ -55,10 +59,10 @@
 
             if (rec[statusField] === 'paid') {
                 rec[statusField] = 'pending';
-                rec[statusField + 'Date'] = '';
+                rec[dateField] = '';
             } else {
                 rec[statusField] = 'paid';
-                rec[statusField + 'Date'] = new Date().toISOString().slice(0, 10);
+                rec[dateField] = new Date().toISOString().slice(0, 10);
             }
             saveData();
             renderStatement();
@@ -95,16 +99,16 @@
                         <span class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-${color}-700">
                             <i class="fa-solid ${icon}"></i>${label}
                         </span>
-                        <button type="button" onclick="toggleStatus(${prop.id}, '${type}')" aria-label="${isPaid ? 'Marcar como pendente' : 'Marcar como pago'}: ${label} - ${prop.name}" class="shrink-0 rounded-lg px-2 py-1 text-xs font-bold transition ${isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
+                        <button type="button" onclick="toggleStatus(${Number(prop.id)}, '${type}')" aria-label="${isPaid ? 'Marcar como pendente' : 'Marcar como pago'}: ${label} - ${escapeHtml(prop.name)}" class="shrink-0 rounded-lg px-2 py-1 text-xs font-bold transition ${isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
                             ${isPaid ? '<i class="fa-solid fa-check mr-1"></i>Pago' : '<i class="fa-solid fa-clock mr-1"></i>Pendente'}
                         </button>
                     </div>
-                    <label class="sr-only" for="charge-${type}-${prop.id}">Valor de ${label} para ${prop.name}</label>
+                    <label class="sr-only" for="charge-${type}-${Number(prop.id)}">Valor de ${label} para ${escapeHtml(prop.name)}</label>
                     <div class="relative mt-2">
                         <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-xs font-medium text-slate-400">R$</span>
-                        <input id="charge-${type}-${prop.id}" type="number" step="0.01" value="${value}" placeholder="0,00" onchange="updateRecordField(${prop.id}, '${valueField}', ${valueHandler})" class="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <input id="charge-${type}-${Number(prop.id)}" type="number" step="0.01" value="${escapeHtml(value)}" placeholder="0,00" onchange="updateRecordField(${Number(prop.id)}, '${valueField}', ${valueHandler})" class="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
-                    ${date ? `<span class="mt-1.5 block text-[11px] text-slate-400">Pago em: ${date}</span>` : ''}
+                    ${date ? `<span class="mt-1.5 block text-[11px] text-slate-400">Pago em: ${escapeHtml(date)}</span>` : ''}
                 </div>
             `;
         }
@@ -138,7 +142,7 @@
                     + (Number(rec.electricityValue) || 0);
 
                 const card = document.createElement('div');
-                card.className = "bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-100 space-y-3";
+                card.className = "statement-property-card bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-100 space-y-3";
                 
                 card.innerHTML = `
                     <div class="flex items-center justify-between gap-3">
@@ -147,7 +151,7 @@
                                 <i class="fa-solid fa-house text-sm"></i>
                             </div>
                             <div class="min-w-0">
-                                <h3 class="truncate text-sm font-bold text-slate-800">${prop.name}</h3>
+                                <h3 class="truncate text-sm font-bold text-slate-800">${escapeHtml(prop.name)}</h3>
                             </div>
                         </div>
                         <div class="shrink-0 rounded-lg bg-indigo-50 px-3 py-1.5 text-right">

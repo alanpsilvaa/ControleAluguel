@@ -55,6 +55,16 @@
             if (document.getElementById('statement-list')) renderStatement();
         }
 
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, character => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            })[character]);
+        }
+
         // Tab Switching
         function switchTab(tabName) {
             const targetSection = document.getElementById(`tab-${tabName}`);
