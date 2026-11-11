@@ -26,8 +26,8 @@
 
     --color-text: #1e293b;
     --color-text-heading: #0f172a;
-    --color-text-secondary: #64748b;
-    --color-text-muted: #94a3b8;
+    --color-text-secondary: #475569;
+    --color-text-muted: #64748b;
 
     --color-brand: #4f46e5;
     --color-brand-hover: #4338ca;
@@ -176,7 +176,59 @@ body {
 }
 
 .statement-property-card {
+    background-color: var(--color-surface-card) !important;
     border-color: #cbd5e1 !important;
+}
+
+.statement-property-total {
+    background-color: var(--color-brand-soft);
+}
+
+.statement-charge {
+    transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.statement-charge.is-paid {
+    background-color: #ecfdf5;
+    border-color: #a7f3d0;
+}
+
+.statement-charge.is-pending {
+    background-color: #fffbeb;
+    border-color: #fde68a;
+}
+
+.app-navigation {
+    min-width: 0;
+}
+
+.app-navigation button:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+}
+
+@media (max-width: 639px) {
+    .app-navigation {
+        width: 100%;
+        justify-content: flex-start;
+        overflow-x: auto;
+        scrollbar-width: thin;
+    }
+
+    .app-navigation button {
+        min-height: 44px;
+        flex: 0 0 auto;
+        justify-content: center;
+        padding-inline: 0.75rem;
+        white-space: nowrap;
+    }
 }
 
 @media (hover: hover) {

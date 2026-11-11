@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Aluguéis">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="manifest" href="manifest.webmanifest">
     <title>Controle de Aluguéis</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -12,8 +17,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="styles.css?v=20261018-6">
-    <link rel="icon" type="image/jpeg" href="casa1.jpg">
+    <link rel="stylesheet" href="styles.css?v=20261111-3">
+    <link rel="icon" type="image/svg+xml" href="app-icon.svg">
+    <link rel="apple-touch-icon" href="app-icon-192.png">
 </head>
 <body class="page-casas bg-slate-50 text-slate-800 h-full flex flex-col">
 
@@ -31,7 +37,7 @@
             </div>
             
             <!-- Navigation Tabs -->
-            <div class="flex bg-indigo-700/60 p-1.5 rounded-xl border border-indigo-500/30">
+            <div class="app-navigation flex bg-indigo-700/60 p-1.5 rounded-xl border border-indigo-500/30">
                 <button onclick="switchTab('properties')" id="btn-tab-properties" class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2 bg-white text-indigo-700 shadow-sm">
                     <i class="fa-solid fa-house"></i>
                     <span>Casas</span>
@@ -100,6 +106,14 @@
                     <i class="fa-solid fa-plus"></i>
                     <span>Nova Casa</span>
                 </button>
+            </div>
+
+            <div class="max-w-md">
+                <label for="property-filter" class="mb-1 block text-sm font-medium text-slate-700">Buscar pelo nome do inquilino</label>
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true"></i>
+                    <input type="search" id="property-filter" oninput="renderProperties()" placeholder="Digite o nome do inquilino" autocomplete="off" class="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
             </div>
 
             <!-- Properties Grid -->
@@ -177,7 +191,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Aluguel base (R$)</label>
-                    <input type="number" step="0.01" id="prop-rent" required placeholder="0.00" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="number" min="0" step="0.01" id="prop-rent" required placeholder="0.00" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
                 <div class="flex justify-end space-x-3 pt-3">
                     <button type="button" onclick="closePropertyModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-medium text-sm transition">Cancelar</button>
@@ -193,10 +207,11 @@
         &copy; 2026 Todos os direitos reservados
     </footer>
 
-    <script src="app.js?v=20261019-1"></script>
-    <script src="casas.js?v=20261019-1"></script>
-    <script src="extrato.js?v=20261019-1"></script>
-    <script src="importar-contas.js?v=20261018-8"></script>
+    <script src="app.js?v=20261019-4"></script>
+    <script src="casas.js?v=20261111-6"></script>
+    <script src="extrato.js?v=20261111-10"></script>
+    <script src="importar-contas.js?v=20261019-14"></script>
     <script src="supabase.js?v=20261018-8"></script>
+    <script src="pwa.js"></script>
 </body>
 </html>

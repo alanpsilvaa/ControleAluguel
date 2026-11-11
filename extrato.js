@@ -1,4 +1,60 @@
         // --- STATEMENT & MONTHLY MANAGEMENT ---
+        function normalizeTenantSearch(value) {
+            return String(value || '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLocaleLowerCase('pt-BR')
+                .trim();
+        }
+
+        function openShareSummary(propertyId) {
+            const property = properties.find(item => String(item.id) === String(propertyId));
+            if (!property) {
+                showToast('Não foi possível localizar este imóvel.', 'error');
+                return;
+            }
+
+            const record = getMonthRecord(property.id);
+            const monthLabel = new Intl.DateTimeFormat('pt-BR', {
+                month: 'long',
+                year: 'numeric'
+            }).format(new Date(`${currentMonth}-01T12:00:00`));
+            const formatCurrency = value => `R$ ${Number(value || 0).toLocaleString('pt-BR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            })}`;
+            const total = (Number(record.rentValue) || 0)
+                + (Number(record.waterValue) || 0)
+                + (Number(record.electricityValue) || 0);
+            const message = [
+                `Olá! Segue o resumo dos valores do imóvel ${property.name} referente a ${monthLabel}:`,
+                '',
+                `Aluguel: ${formatCurrency(record.rentValue)}`,
+                `Água: ${formatCurrency(record.waterValue)}`,
+                `Luz: ${formatCurrency(record.electricityValue)}`,
+                '',
+                `Total: ${formatCurrency(total)}`
+            ].join('\n');
+
+            const modal = document.getElementById('share-summary-modal');
+            const messageField = document.getElementById('share-summary-message');
+            messageField.value = message;
+            updateShareWhatsAppLink();
+            modal.classList.remove('hidden');
+            messageField.focus();
+            messageField.select();
+        }
+
+        function closeShareSummary() {
+            document.getElementById('share-summary-modal').classList.add('hidden');
+        }
+
+        function updateShareWhatsAppLink() {
+            const message = document.getElementById('share-summary-message').value;
+            document.getElementById('share-summary-whatsapp').href =
+                `https://wa.me/?text=${encodeURIComponent(message)}`;
+        }
+
         function changeMonth() {
             currentMonth = document.getElementById('select-month').value;
             localStorage.setItem('rental_current_month', currentMonth);
@@ -23,8 +79,9 @@
         function getMonthRecordForPeriod(month, propId) {
             if (!records[month]) records[month] = {};
             if (!records[month][propId]) {
+                const property = properties.find(item => String(item.id) === String(propId));
                 records[month][propId] = {
-                    rentValue: 0,
+                    rentValue: Number(property?.defaultRent) || 0,
                     rentStatus: 'pending',
                     rentDate: '',
                     waterValue: 0,
@@ -42,14 +99,7 @@
             const rec = getMonthRecord(propId);
             rec[field] = value;
             saveData();
-            renderStatementSummary();
-            const propertyTotal = (Number(rec.rentValue) || 0)
-                + (Number(rec.waterValue) || 0)
-                + (Number(rec.electricityValue) || 0);
-            const totalElement = document.getElementById(`property-total-${propId}`);
-            if (totalElement) {
-                totalElement.textContent = `R$ ${propertyTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-            }
+            renderStatement();
         }
 
         function toggleStatus(propId, type) {
@@ -94,7 +144,7 @@
             const date = rec[`${type}Date`];
 
             return `
-                <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+                <div class="statement-charge ${isPaid ? 'is-paid' : 'is-pending'} rounded-xl border p-3">
                     <div class="flex items-center justify-between gap-2">
                         <span class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-${color}-700">
                             <i class="fa-solid ${icon}"></i>${label}
@@ -117,6 +167,17 @@
             const listContainer = document.getElementById('statement-list');
             if (!listContainer) return;
             listContainer.innerHTML = '';
+            const searchTerm = normalizeTenantSearch(document.getElementById('tenant-filter')?.value);
+            const paymentFilter = document.getElementById('payment-status-filter')?.value || 'all';
+            const visibleProperties = properties.filter(prop => {
+                if (!normalizeTenantSearch(prop.name).includes(searchTerm)) return false;
+                if (paymentFilter === 'all') return true;
+
+                const rec = getMonthRecord(prop.id);
+                const allPaymentsPaid = ['rent', 'water', 'electricity']
+                    .every(type => rec[`${type}Status`] === 'paid');
+                return paymentFilter === 'paid' ? allPaymentsPaid : !allPaymentsPaid;
+            });
 
             if (properties.length === 0) {
                 listContainer.innerHTML = `
@@ -131,32 +192,46 @@
                         </button>
                     </div>
                 `;
-                renderStatementSummary();
+                renderStatementSummary([]);
                 return;
             }
 
-            properties.forEach(prop => {
+            if (visibleProperties.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+                        <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
+                            <i class="fa-solid fa-magnifying-glass text-xl"></i>
+                        </div>
+                        <h3 class="font-bold text-slate-800">Nenhum lançamento encontrado</h3>
+                        <p class="mt-1 text-sm text-slate-500">Tente mudar a busca ou o filtro de pagamento.</p>
+                    </div>
+                `;
+                renderStatementSummary([]);
+                return;
+            }
+
+            visibleProperties.forEach(prop => {
                 const rec = getMonthRecord(prop.id);
                 const propertyTotal = (Number(rec.rentValue) || 0)
                     + (Number(rec.waterValue) || 0)
                     + (Number(rec.electricityValue) || 0);
-
                 const card = document.createElement('div');
                 card.className = "statement-property-card bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-100 space-y-3";
-                
                 card.innerHTML = `
                     <div class="flex items-center justify-between gap-3">
-                        <div class="flex min-w-0 items-center gap-2.5">
-                            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
-                                <i class="fa-solid fa-house text-sm"></i>
+                        <div class="min-w-0 space-y-0.5">
+                            <div class="flex min-w-0 items-center gap-2">
+                                <i class="fa-solid fa-circle-user w-4 shrink-0 text-center text-indigo-600" aria-hidden="true"></i>
+                                <h3 class="min-w-0 truncate text-sm font-bold text-slate-800">${escapeHtml(prop.name)}</h3>
                             </div>
-                            <div class="min-w-0">
-                                <h3 class="truncate text-sm font-bold text-slate-800">${escapeHtml(prop.name)}</h3>
+                            <div class="flex min-w-0 items-start gap-2">
+                                <i class="fa-solid fa-house mt-0.5 w-4 shrink-0 text-center text-indigo-600" aria-hidden="true"></i>
+                                <p class="min-w-0 whitespace-normal break-words text-xs text-slate-600">${escapeHtml(prop.address)}</p>
                             </div>
                         </div>
-                        <div class="shrink-0 rounded-lg bg-indigo-50 px-3 py-1.5 text-right">
+                        <div class="statement-property-total shrink-0 rounded-lg px-3 py-1.5 text-right">
                             <span class="block text-[10px] font-semibold uppercase tracking-wide text-indigo-500">Total</span>
-                            <span id="property-total-${prop.id}" class="text-sm font-bold text-indigo-700">R$ ${propertyTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                            <span class="text-sm font-bold text-indigo-700">R$ ${propertyTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
                         </div>
                     </div>
 
@@ -165,19 +240,25 @@
                         ${renderStatementCharge(prop, rec, 'water', 'Água', 'fa-droplet', 'waterValue', 'sky')}
                         ${renderStatementCharge(prop, rec, 'electricity', 'Luz', 'fa-bolt', 'electricityValue', 'amber')}
                     </div>
+                    <div class="flex justify-end border-t border-slate-200 pt-2">
+                        <button type="button" onclick="openShareSummary(${Number(prop.id)})" class="inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700">
+                            <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
+                            Compartilhar cobrança
+                        </button>
+                    </div>
                 `;
                 listContainer.appendChild(card);
             });
 
-            renderStatementSummary();
+            renderStatementSummary(visibleProperties);
         }
 
-        function renderStatementSummary() {
+        function renderStatementSummary(summaryProperties = properties) {
             let total = 0;
             let received = 0;
             let pending = 0;
 
-            properties.forEach(prop => {
+            summaryProperties.forEach(prop => {
                 const rec = getMonthRecord(prop.id);
                 const rVal = Number(rec.rentValue) || 0;
                 const wVal = Number(rec.waterValue) || 0;
