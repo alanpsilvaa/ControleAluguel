@@ -18,7 +18,6 @@
         let currentMonth = /^\d{4}-(0[1-9]|1[0-2])$/.test(savedMonth || '')
             ? savedMonth
             : new Date().toISOString().slice(0, 7);
-
         // Supabase client instance (if configured)
         let supabaseClient = null;
         let cloudReady = false;

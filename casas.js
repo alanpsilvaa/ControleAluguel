@@ -1,19 +1,50 @@
         // --- PROPERTIES MANAGEMENT ---
+        function normalizePropertySearch(value) {
+            return String(value || '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLocaleLowerCase('pt-BR')
+                .trim();
+        }
+
         function renderProperties() {
             const grid = document.getElementById('properties-grid');
             if (!grid) return;
             grid.innerHTML = '';
+            const searchTerm = normalizePropertySearch(document.getElementById('property-filter')?.value);
+            const visibleProperties = properties.filter(prop =>
+                normalizePropertySearch(prop.name).includes(searchTerm)
+            );
 
-            properties.forEach(prop => {
-                const propertyId = Number(prop.id);
+            if (visibleProperties.length === 0) {
+                grid.innerHTML = `
+                    <div class="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+                        <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
+                            <i class="fa-solid fa-magnifying-glass text-xl"></i>
+                        </div>
+                        <h3 class="font-bold text-slate-800">${properties.length ? 'Nenhuma casa encontrada' : 'Nenhuma casa cadastrada'}</h3>
+                        <p class="mt-1 text-sm text-slate-500">${properties.length ? 'Confira o nome ou a identificação digitada.' : 'Cadastre uma casa para começar.'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            visibleProperties.forEach(prop => {
                 const card = document.createElement('div');
-                const rent = Number(prop.defaultRent) || 0;
                 card.className = "bg-slate-200 p-4 rounded-2xl shadow-sm border border-slate-300 flex flex-col gap-3 hover:shadow-md transition";
+                const propertyId = Number(prop.id);
+                const rent = Number(prop.defaultRent) || 0;
                 card.innerHTML = `
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-between">
                         <div class="min-w-0 space-y-2">
-                            <span class="inline-flex rounded-lg bg-indigo-50 px-2.5 py-1 text-base font-semibold text-indigo-700">${escapeHtml(prop.name)}</span>
-                            <h3 class="font-bold text-slate-800 text-base">${escapeHtml(prop.address)}</h3>
+                            <div class="flex items-center gap-2 text-base font-semibold text-indigo-700">
+                                <i class="fa-solid fa-circle-user w-5 shrink-0 text-center text-lg" aria-hidden="true"></i>
+                                <span>${escapeHtml(prop.name)}</span>
+                            </div>
+                            <h3 class="flex items-center gap-2 font-bold text-slate-800 text-base">
+                                <i class="fa-solid fa-house w-5 shrink-0 text-center text-indigo-600" aria-hidden="true"></i>
+                                <span>${escapeHtml(prop.address)}</span>
+                            </h3>
                             <div class="flex flex-col gap-1 text-xs text-slate-500 sm:flex-row sm:flex-wrap sm:gap-x-5">
                                 <span><span class="font-semibold text-sky-700">Fornecimento Sabesp:</span> <span class="font-mono">${escapeHtml(prop.sabespCustomerCode || 'Não cadastrado')}</span></span>
                                 <span><span class="font-semibold text-amber-700">UC Enel:</span> <span class="font-mono">${escapeHtml(prop.enelInstallationCode || 'Não cadastrada')}</span></span>
@@ -72,14 +103,13 @@
             const sabespCustomerCode = document.getElementById('prop-sabesp-code').value.trim();
             const enelInstallationCode = document.getElementById('prop-enel-code').value.trim();
             const normalizeCode = value => String(value || '').replace(/\D/g, '');
-            const existingProperty = property => String(property.id) !== String(id);
             const duplicateSabesp = normalizeCode(sabespCustomerCode) && properties.find(property =>
-                existingProperty(property)
-                && normalizeCode(property.sabespCustomerCode) === normalizeCode(sabespCustomerCode)
+                normalizeCode(property.sabespCustomerCode) === normalizeCode(sabespCustomerCode)
+                && String(property.id) !== String(id)
             );
             const duplicateEnel = normalizeCode(enelInstallationCode) && properties.find(property =>
-                existingProperty(property)
-                && normalizeCode(property.enelInstallationCode) === normalizeCode(enelInstallationCode)
+                normalizeCode(property.enelInstallationCode) === normalizeCode(enelInstallationCode)
+                && String(property.id) !== String(id)
             );
             if (duplicateSabesp || duplicateEnel) {
                 const company = duplicateSabesp ? 'Sabesp' : 'Enel';
@@ -88,7 +118,7 @@
             }
 
             if (id) {
-                const index = properties.findIndex(p => p.id == id);
+                const index = properties.findIndex(p => String(p.id) === String(id));
                 if (index !== -1) {
                     properties[index] = {
                         ...properties[index],

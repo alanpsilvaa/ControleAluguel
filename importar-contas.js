@@ -282,7 +282,7 @@
                 properties.forEach(property => {
                     const option = document.createElement('option');
                     option.value = String(property.id);
-                    option.textContent = property.name;
+                    option.textContent = `${property.name} · ${property.address}`;
                     propertySelect.appendChild(option);
                 });
                 propertySelect.value = bill.propertyId;
@@ -431,7 +431,7 @@
             const duplicate = selected.find((bill, index) =>
                 selected.some((other, otherIndex) =>
                     otherIndex < index
-                    && other.propertyId === bill.propertyId
+                    && String(other.propertyId) === String(bill.propertyId)
                     && other.month === bill.month
                     && other.utility === bill.utility
                 )
@@ -456,14 +456,14 @@
             const chargeFieldByUtility = { sabesp: 'waterValue', enel: 'electricityValue' };
             const conflicts = selected.filter(bill => {
                 const field = chargeFieldByUtility[bill.utility];
-                const existing = records[bill.month]?.[bill.propertyId]?.[field];
+                const existing = Number(records[bill.month]?.[bill.propertyId]?.[field]) || 0;
                 return Number.isFinite(Number(existing))
                     && Number(existing) !== 0
                     && Number(existing) !== Number(bill.amount);
             });
             if (conflicts.length) {
                 const descriptions = conflicts.map(bill => {
-                    const property = properties.find(item => String(item.id) === bill.propertyId);
+                    const property = properties.find(item => String(item.id) === String(bill.propertyId));
                     return `${property?.name || 'Casa'} - ${bill.utility === 'sabesp' ? 'água' : 'luz'} (${bill.month})`;
                 }).join('\n');
                 if (!confirm(`Estas faturas substituirão valores já lançados:\n${descriptions}\n\nDeseja continuar?`)) return;
@@ -471,8 +471,7 @@
 
             selected.forEach(bill => {
                 const field = chargeFieldByUtility[bill.utility];
-                const record = records[bill.month]?.[bill.propertyId]
-                    || getMonthRecordForPeriod(bill.month, bill.propertyId);
+                const record = getMonthRecordForPeriod(bill.month, bill.propertyId);
                 record[field] = Number(bill.amount);
             });
 
